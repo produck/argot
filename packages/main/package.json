@@ -2,9 +2,15 @@
   "bugs": {
     "url": "https://github.com/produck/argot/issues"
   },
-  "description": "Primary workspace package of the @produck/argot monorepo.",
+  "dependencies": {
+    "@produck/type-error": "0.1.7"
+  },
+  "description": "Shared vocabulary for produck projects: common helpers and a symbol table.",
   "exports": {
-    ".": "./src/index.mjs"
+    ".": {
+      "import": "./src/index.mjs",
+      "types": "./src/index.d.ts"
+    }
   },
   "files": [
     "src"
@@ -12,7 +18,10 @@
   "homepage": "https://github.com/produck/argot/tree/main/packages/main#readme",
   "license": "MIT",
   "main": "./src/index.mjs",
-  "name": "@produck/main",
+  "name": "@produck/argot",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "directory": "packages/main",
     "type": "git",

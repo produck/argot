@@ -1,1 +1,2 @@
-import './version.test.mjs';
+import './Common.test.mjs';
+import './Symbol.test.mjs';
