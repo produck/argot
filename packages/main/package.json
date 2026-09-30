@@ -1,0 +1,27 @@
+{
+  "bugs": {
+    "url": "https://github.com/produck/argot/issues"
+  },
+  "description": "Primary workspace package of the @produck/argot monorepo.",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "src"
+  ],
+  "homepage": "https://github.com/produck/argot/tree/main/packages/main#readme",
+  "license": "MIT",
+  "main": "./src/index.mjs",
+  "name": "@produck/main",
+  "repository": {
+    "directory": "packages/main",
+    "type": "git",
+    "url": "git+https://github.com/produck/argot.git"
+  },
+  "scripts": {
+    "produck:coverage": "c8 --reporter=lcov --reporter=html --reporter=text-summary npm test",
+    "test": "node test/index.mjs"
+  },
+  "type": "module",
+  "version": "0.0.0"
+}
