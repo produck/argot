@@ -74,22 +74,30 @@ describe('sleep()', () => {
   });
 });
 
-describe('throwFalse()', () => {
+describe('ThrowFalse()', () => {
   it('should return the result of the given function', () => {
-    assert.equal(Common.throwFalse(Common.toTrue), true);
+    assert.equal(Common.ThrowFalse(Common.toTrue)(), true);
+  });
+
+  it('should forward all arguments to the given function', () => {
+    const args = [];
+    const safe = Common.ThrowFalse((...values) => args.push(...values));
+
+    safe(1, 'two', 3);
+
+    assert.deepEqual(args, [1, 'two', 3]);
   });
 
   it('should return false when the given function throws', () => {
-    assert.equal(
-      Common.throwFalse(() => {
-        throw new Error('boom');
-      }),
-      false,
-    );
+    const safe = Common.ThrowFalse(() => {
+      throw new Error('boom');
+    });
+
+    assert.equal(safe(), false);
   });
 
   it('should throw when fn is not a function', () => {
-    assert.throws(() => Common.throwFalse(1), {
+    assert.throws(() => Common.ThrowFalse(1), {
       name: 'TypeError',
       message: 'Invalid "args[0] as fn", one "function" expected.',
     });
@@ -102,20 +110,28 @@ describe('ReturnTrueThrowFalse()', () => {
   });
 
   it('should return true when the given function returns', () => {
-    assert.equal(Common.RTTF(Common.toTrue), true);
+    assert.equal(Common.RTTF(Common.toTrue)(), true);
   });
 
   it('should return true even when the given function returns false', () => {
-    assert.equal(Common.RTTF(Common.toFalse), true);
+    assert.equal(Common.RTTF(Common.toFalse)(), true);
+  });
+
+  it('should forward all arguments to the given function', () => {
+    const args = [];
+    const report = Common.RTTF((...values) => args.push(...values));
+
+    report(1, 'two', 3);
+
+    assert.deepEqual(args, [1, 'two', 3]);
   });
 
   it('should return false when the given function throws', () => {
-    assert.equal(
-      Common.RTTF(() => {
-        throw new Error('boom');
-      }),
-      false,
-    );
+    const report = Common.RTTF(() => {
+      throw new Error('boom');
+    });
+
+    assert.equal(report(), false);
   });
 
   it('should throw when fn is not a function', () => {

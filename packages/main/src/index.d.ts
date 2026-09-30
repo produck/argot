@@ -52,27 +52,43 @@ export namespace Common {
   export function sleep(ms: number): Promise<undefined>;
 
   /**
-   * Calls `fn`, surrendering the return value to the caller.
+   * Wraps `fn` so that a thrown error becomes `false`.
    *
-   * @param fn - the function to call
-   * @returns whatever `fn` returns, or `false` when it throws
+   * @param fn - the function to wrap
+   * @returns a function forwarding its arguments to `fn`, returning
+   *   whatever `fn` returns — or `false` when `fn` throws
+   * @example
+   * ```js
+   * const parse = Common.ThrowFalse(JSON.parse);
+   *
+   * parse('{}'); // {}
+   * parse('nope'); // false
+   * ```
    */
-  export function throwFalse<R>(fn: () => R): R | false;
+  export function ThrowFalse<A extends unknown[], R>(
+    fn: (...args: A) => R,
+  ): (...args: A) => R | false;
 
   /**
-   * Calls `fn` only to find out whether it throws.
+   * Wraps `fn` so that a call reports only whether it threw.
    *
    * The return value of `fn` is discarded: a falsy return still yields
    * `true`.
    *
-   * @param fn - the function to call
-   * @returns `true` when `fn` returns, `false` when it throws
+   * @param fn - the function to wrap
+   * @returns a function forwarding its arguments to `fn`, returning
+   *   `true` when `fn` returns and `false` when it throws
    * @example
    * ```js
-   * Common.RTTF(() => JSON.parse(input));
+   * const parses = Common.RTTF(JSON.parse);
+   *
+   * parses('{}'); // true
+   * parses('nope'); // false
    * ```
    */
-  export function ReturnTrueThrowFalse(fn: () => unknown): boolean;
+  export function ReturnTrueThrowFalse<A extends unknown[]>(
+    fn: (...args: A) => unknown,
+  ): (...args: A) => boolean;
 
   /**
    * Reports whether a promise resolves or rejects.

@@ -28,26 +28,30 @@ export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function throwFalse(fn) {
+export function ThrowFalse(fn) {
   Assert.Function(fn, 'args[0] as fn');
 
-  try {
-    return fn();
-  } catch {
-    return false;
-  }
+  return (...args) => {
+    try {
+      return fn(...args);
+    } catch {
+      return false;
+    }
+  };
 }
 
 export function ReturnTrueThrowFalse(fn) {
   Assert.Function(fn, 'args[0] as fn');
 
-  try {
-    fn();
+  return (...args) => {
+    try {
+      fn(...args);
 
-    return true;
-  } catch {
-    return false;
-  }
+      return true;
+    } catch {
+      return false;
+    }
+  };
 }
 
 export function ResolveTrueRejectFalse(promise) {
