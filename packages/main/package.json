@@ -3,6 +3,7 @@
     "url": "https://github.com/produck/argot/issues"
   },
   "dependencies": {
+    "@produck/ow": "^0.2.5",
     "@produck/type-error": "0.1.7"
   },
   "description": "Shared vocabulary for produck projects: common helpers and a symbol table.",

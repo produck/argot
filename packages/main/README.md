@@ -45,12 +45,13 @@ failure becomes a value instead of propagating.
 
 **Degenerate values**
 
-#### `noop()`
+#### `noop()` / `toUndefined()`
 
-Returns `undefined`.
+Returns `undefined`. The two names are the same function.
 
 ```js
 Common.noop(); // undefined
+Common.toUndefined(); // undefined
 ```
 
 #### `toTrue()`
@@ -231,6 +232,20 @@ Windows reports. That is deliberately not SI: SI reserves `kB` for
 1000 and `KiB` for 1024. So `KILO_BYTE` here means 1024 bytes, always,
 and the name alone cannot tell you that. Treat the table as the
 definition.
+
+### Re-exported dependencies
+
+Two dependencies are re-exported from the top level of this package:
+
+- `Ow` — the `@produck/ow` namespace, reached as `Ow.Thrower`,
+  `Ow.throw`, `Ow.Error`.
+- `@produck/type-error` — flat, not namespaced: `AssertionChecker`,
+  `ErrorMessage`, `ThrowTypeError`, and the types `Assert` and
+  `Validate`.
+
+```js
+import { AssertionChecker, Ow } from '@produck/argot';
+```
 
 ## Naming convention
 

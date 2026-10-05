@@ -8,6 +8,16 @@ describe('noop()', () => {
   });
 });
 
+describe('toUndefined()', () => {
+  it('should be identical to noop', () => {
+    assert.equal(Common.toUndefined, Common.noop);
+  });
+
+  it('should return undefined', () => {
+    assert.equal(Common.toUndefined(), undefined);
+  });
+});
+
 describe('toTrue()', () => {
   it('should return true', () => {
     assert.equal(Common.toTrue(), true);

@@ -149,6 +149,11 @@ export namespace Common {
    * Alias of {@link ResolveTrueRejectFalse}.
    */
   export const RTRF: typeof ResolveTrueRejectFalse;
+
+  /**
+   * Alias of {@link noop}.
+   */
+  export const toUndefined: typeof noop;
 }
 
 /**
@@ -301,3 +306,14 @@ export namespace Unit {
     export const TB: typeof TERA_BYTE;
   }
 }
+
+/**
+ * `@produck/ow`, re-exported as a namespace.
+ */
+export * as Ow from '@produck/ow';
+
+/**
+ * `@produck/type-error`, re-exported flat so that its assertion helpers
+ * are reachable at the top level of this package.
+ */
+export * from '@produck/type-error';
