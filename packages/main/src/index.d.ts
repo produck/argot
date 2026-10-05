@@ -1,6 +1,6 @@
 /**
  * `@produck/argot` — the organization-wide shared vocabulary for
- * produck projects: common helpers and a symbol table.
+ * produck projects: common helpers, units, and a symbol table.
  *
  * Every entry validates its arguments with `@produck/type-error` and
  * throws `TypeError` synchronously on a bad argument — including the
@@ -164,4 +164,140 @@ export namespace SYMBOL {
    * field.
    */
   export const CONSTRUCTOR: symbol;
+}
+
+/**
+ * Agreed-on magnitudes, so that a bare number carries its unit in the
+ * name. Each table is based on one unit.
+ */
+export namespace Unit {
+  /**
+   * Durations, counted in milliseconds.
+   *
+   * Every unit is a whole multiple of the one below it. A month and a
+   * year are absent: the calendar, not the clock, decides their
+   * length, so neither is a constant.
+   */
+  export namespace Time {
+    /**
+     * The base unit: `1` millisecond.
+     */
+    export const MILLISECOND: 1;
+
+    /**
+     * Alias of {@link MILLISECOND}.
+     */
+    export const MS: typeof MILLISECOND;
+
+    /**
+     * `1000` milliseconds.
+     */
+    export const SECOND: 1000;
+
+    /**
+     * Alias of {@link SECOND}.
+     */
+    export const SEC: typeof SECOND;
+
+    /**
+     * `60` seconds.
+     */
+    export const MINUTE: 60000;
+
+    /**
+     * Alias of {@link MINUTE}.
+     */
+    export const MIN: typeof MINUTE;
+
+    /**
+     * `60` minutes.
+     */
+    export const HOUR: 3600000;
+
+    /**
+     * Alias of {@link HOUR}.
+     */
+    export const HR: typeof HOUR;
+
+    /**
+     * `24` hours. Not aliased: the full name is already the mainstream
+     * form.
+     */
+    export const DAY: 86400000;
+
+    /**
+     * `7` days.
+     */
+    export const WEEK: 604800000;
+
+    /**
+     * Alias of {@link WEEK}.
+     */
+    export const WK: typeof WEEK;
+  }
+
+  /**
+   * Sizes, counted in bytes.
+   *
+   * The base is **1024, not 1000** — the familiar reading of `KB`,
+   * and what Windows reports. This is deliberately not SI: SI reserves
+   * `kB` for 1000 and `KiB` for 1024. So `KILO_BYTE` here means 1024
+   * bytes, always.
+   */
+  export namespace Byte {
+    /**
+     * The base unit: `1` byte.
+     */
+    export const BYTE: 1;
+
+    /**
+     * Alias of {@link BYTE}.
+     */
+    export const B: typeof BYTE;
+
+    /**
+     * The factor between adjacent units: `1 << 10`, i.e. `1024`.
+     */
+    export const STEP: 1024;
+
+    /**
+     * `1024` bytes.
+     */
+    export const KILO_BYTE: 1024;
+
+    /**
+     * Alias of {@link KILO_BYTE}.
+     */
+    export const KB: typeof KILO_BYTE;
+
+    /**
+     * `1024` kilobytes, i.e. `1048576` bytes.
+     */
+    export const MEGA_BYTE: 1048576;
+
+    /**
+     * Alias of {@link MEGA_BYTE}.
+     */
+    export const MB: typeof MEGA_BYTE;
+
+    /**
+     * `1024` megabytes, i.e. `1073741824` bytes.
+     */
+    export const GIGA_BYTE: 1073741824;
+
+    /**
+     * Alias of {@link GIGA_BYTE}.
+     */
+    export const GB: typeof GIGA_BYTE;
+
+    /**
+     * `1024` gigabytes, i.e. `1099511627776` bytes.
+     */
+    export const TERA_BYTE: 1099511627776;
+
+    /**
+     * Alias of {@link TERA_BYTE}.
+     */
+    export const TB: typeof TERA_BYTE;
+  }
 }

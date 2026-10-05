@@ -1,7 +1,7 @@
 # @produck/argot
 
 Organization-wide shared vocabulary for produck projects: common
-helpers and a symbol table.
+helpers, units, and a symbol table.
 
 It is meant to sit at the bottom of the stack: sibling packages and
 applications import it so that a term means the same thing everywhere,
@@ -16,7 +16,7 @@ npm install @produck/argot
 ## Usage
 
 ```js
-import { Common, SYMBOL } from '@produck/argot';
+import { Common, SYMBOL, Unit } from '@produck/argot';
 
 const parses = Common.RTTF(JSON.parse);
 
@@ -25,7 +25,9 @@ parses('nope'); // false
 
 await Common.RTRF(fetch('/api/v1/health')); // true when it succeeded
 
-await Common.sleep(120);
+await Common.sleep(2 * Unit.Time.SEC);
+
+const maxBody = 4 * Unit.Byte.MB; // 4194304
 
 instance[SYMBOL.CONSTRUCTOR];
 ```
@@ -168,6 +170,67 @@ await Common.ignoreRejection(fetch('/api/v1/health'));
 
 - `CONSTRUCTOR` — the instance slot standing in for the private
   `#constructor` field
+
+### `Unit`
+
+Agreed-on magnitudes, so that a bare number carries its unit in the
+name. Each table is based on one unit, and every alias is exported
+alongside its full name.
+
+The base is stated per table rather than assumed: `Time` counts
+milliseconds, `Byte` counts bytes in 1024 steps.
+
+#### `Unit.Time`
+
+Durations, counted in milliseconds: `MILLISECOND` is `1`, and every
+unit is a whole multiple of the one below it.
+
+| Full name     | Alias | Milliseconds |
+| ------------- | ----- | ------------ |
+| `MILLISECOND` | `MS`  | 1            |
+| `SECOND`      | `SEC` | 1000         |
+| `MINUTE`      | `MIN` | 60000        |
+| `HOUR`        | `HR`  | 3600000      |
+| `DAY`         | —     | 86400000     |
+| `WEEK`        | `WK`  | 604800000    |
+
+```js
+await Common.sleep(30 * Unit.Time.SEC);
+```
+
+Only fixed multiples are listed. A month and a year are not constants
+— the calendar decides their length — so they are deliberately
+absent. `DAY` carries no alias because its full name is already the
+mainstream form.
+
+#### `Unit.Byte`
+
+Sizes, counted in bytes: `BYTE` is `1`, and every unit is `STEP`
+times the one below it. The magnitude prefix is joined to `BYTE` by
+`_`, so the unit word stays readable.
+
+| Full name   | Alias | Bytes         |
+| ----------- | ----- | ------------- |
+| `BYTE`      | `B`   | 1             |
+| `STEP`      | —     | 1024          |
+| `KILO_BYTE` | `KB`  | 1024          |
+| `MEGA_BYTE` | `MB`  | 1048576       |
+| `GIGA_BYTE` | `GB`  | 1073741824    |
+| `TERA_BYTE` | `TB`  | 1099511627776 |
+
+`STEP` is `1 << 10`, the factor between adjacent units. It is exported
+so that a caller can extend the ladder, or convert, without writing the
+literal `1024` again.
+
+```js
+const maxBody = 4 * Unit.Byte.MB; // 4194304
+```
+
+The base is **1024, not 1000** — the familiar reading of `KB`, and what
+Windows reports. That is deliberately not SI: SI reserves `kB` for
+1000 and `KiB` for 1024. So `KILO_BYTE` here means 1024 bytes, always,
+and the name alone cannot tell you that. Treat the table as the
+definition.
 
 ## Naming convention
 

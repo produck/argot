@@ -84,5 +84,4 @@ export function ignoreRejection(promise) {
   return promise.catch(noop);
 }
 
-export { ResolveTrueRejectFalse as RTRF };
-export { ReturnTrueThrowFalse as RTTF };
+export { ResolveTrueRejectFalse as RTRF, ReturnTrueThrowFalse as RTTF };
