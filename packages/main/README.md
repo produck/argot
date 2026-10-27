@@ -16,156 +16,338 @@ npm install @produck/argot
 ## Usage
 
 ```js
-import { Common, SYMBOL, Unit } from '@produck/argot';
+import { Is, RTTF, SYMBOL, Unit, sleep } from '@produck/argot';
 
-const parses = Common.RTTF(JSON.parse);
+const parses = RTTF(JSON.parse);
 
 parses('{}'); // true
 parses('nope'); // false
 
-await Common.RTRF(fetch('/api/v1/health')); // true when it succeeded
-
-await Common.sleep(2 * Unit.Time.SEC);
+await sleep(2 * Unit.Time.SEC);
 
 const maxBody = 4 * Unit.Byte.MB; // 4194304
+
+if (Is.PlainObject(payload) === false) {
+  throw new TypeError('payload must be a plain object');
+}
 
 instance[SYMBOL.CONSTRUCTOR];
 ```
 
-## API
+## Shape
 
-### `Common`
+A flat tail and eight namespaces:
 
-Every argument is validated with `@produck/type-error`. A bad argument
-throws `TypeError` **synchronously** — including for the promise-taking
-helpers — so a `try`/`catch` around a call always catches it.
+| Path          | Contents                                             |
+| ------------- | ---------------------------------------------------- |
+| flat helpers  | `noop`, `passthrough`, `instanceOf`, `sleep`         |
+| flat promises | `RTRF`, `ignoreRejection`                            |
+| flat symbol   | `CONSTRUCTOR`                                        |
+| flat asserts  | `AssertionChecker`, `ErrorMessage`, `ThrowTypeError` |
+| `Boolean`     | `Adapter`                                            |
+| `Constant`    | degenerate values                                    |
+| `Intrinsic`   | constructors with no global name                     |
+| `Is`          | `Primitive`, `Type`, `Instance`, `Compound`          |
+| `Ow`          | the `@produck/ow` package                            |
+| `Promise`     | `Adapter`, `sleep`                                   |
+| `SYMBOL`      | the symbol table                                     |
+| `Unit`        | `Time`, `Byte`                                       |
 
-A **factory** takes a function and returns a new function. The wrapped
-failure becomes a value instead of propagating.
-
-**Degenerate values**
-
-#### `noop()` / `toUndefined()`
-
-Returns `undefined`. The two names are the same function.
-
-```js
-Common.noop(); // undefined
-Common.toUndefined(); // undefined
-```
-
-#### `toTrue()`
-
-Returns `true`.
+The flat names are not copies. Each one is the same object as its
+namespaced form, so either path works:
 
 ```js
-Common.toTrue(); // true
+RTRF === Promise.Adapter.RTRF; // true
+sleep === Promise.sleep; // true
+CONSTRUCTOR === SYMBOL.CONSTRUCTOR; // true
 ```
 
-#### `toFalse()`
+## Flat helpers
 
-Returns `false`.
+### `noop()`
+
+Returns `undefined` and ignores its arguments.
 
 ```js
-Common.toFalse(); // false
+noop(); // undefined
 ```
 
-#### `toNull()`
-
-Returns `null`.
-
-```js
-Common.toNull(); // null
-```
-
-#### `passthrough(any)`
+### `passthrough(any)`
 
 Returns its argument unchanged.
 
 ```js
-Common.passthrough(1); // 1
+passthrough(1); // 1
 ```
 
-**Timing**
+### `instanceOf(object, constructor)`
 
-#### `sleep(ms)`
-
-Resolves with `undefined` after `ms` milliseconds, where `ms` is a
-non-negative integer.
+Reports whether `object instanceof constructor`. Naming it as a
+function keeps the check usable where an expression is expected;
+`Is.Instance.Of` is built on it.
 
 ```js
-await Common.sleep(120);
+instanceOf([], Array); // true
 ```
 
-**Factories**
+### `sleep(ms)`
 
-#### `ThrowFalse(fn)` — factory
+Resolves `undefined` after `ms` milliseconds. `ms` must be a
+non-negative integer; anything else throws `TypeError` synchronously.
+
+```js
+await sleep(120);
+```
+
+### `RTRF(promise)` / `ignoreRejection(promise)`
+
+Described under [`Promise.Adapter`](#promiseadapter).
+
+## `Boolean.Adapter`
+
+A **factory** takes a function and returns a new function. The wrapped
+failure becomes a value instead of propagating.
+
+`fn` is validated synchronously, so a non-function throws `TypeError`
+at wrap time rather than at the first call.
+
+### `ThrowFalse(fn)`
 
 Returns a function that forwards its arguments to `fn` and returns
 whatever `fn` returns — or `false` when `fn` throws.
 
 ```js
-const parse = Common.ThrowFalse(JSON.parse);
+const parse = ThrowFalse(JSON.parse);
 
 parse('{}'); // {}
 parse('nope'); // false
 ```
 
-#### `ReturnTrueThrowFalse(fn)` / `RTTF` — factory
+### `ReturnTrueThrowFalse(fn)` / `RTTF(fn)`
 
-Returns a function that forwards its arguments to `fn` and reports only
-whether it threw. The return value of `fn` is discarded, so a falsy
-return still yields `true`.
+Reports only whether the call threw. The return value of `fn` is
+discarded, so a falsy return still yields `true`.
 
 ```js
-const parses = Common.RTTF(JSON.parse);
+const parses = RTTF(JSON.parse);
 
 parses('{}'); // true
 parses('nope'); // false
 ```
 
-**Promise-taking**
+## `Promise.Adapter`
 
-#### `ResolveTrueRejectFalse(promise)` / `RTRF`
+Each helper collapses one side of the settlement. The argument is
+validated with `instanceof Promise` before anything is attached, so a
+non-promise throws `TypeError` synchronously — a `try`/`catch` around
+the call always catches it.
+
+### `ResolveTrueRejectFalse(promise)` / `RTRF(promise)`
 
 Resolves `true` on resolve and `false` on reject. It never rejects.
 
 ```js
-await Common.RTRF(fetch('/api/v1/health')); // true
+await RTRF(fetch('/api/v1/health')); // true
 ```
 
-#### `resolveTrue(promise)`
+### `resolveTrue(promise)`
 
 Resolves `true`; a rejection propagates unchanged.
 
 ```js
-await Common.resolveTrue(fetch('/api/v1/health')); // true
+await resolveTrue(fetch('/api/v1/health')); // true
 ```
 
-#### `rejectFalse(promise)`
+### `rejectFalse(promise)`
 
 Passes the resolved value through, or resolves `false` on rejection.
 
 ```js
-await Common.rejectFalse(fetch('/api/v1/health')); // Response | false
+await rejectFalse(fetch('/api/v1/health')); // Response | false
 ```
 
-#### `ignoreResolution(promise)`
+### `ignoreResolution(promise)`
 
 Resolves `undefined`; a rejection propagates unchanged.
 
 ```js
-await Common.ignoreResolution(fetch('/api/v1/health')); // undefined
+await ignoreResolution(fetch('/api/v1/health')); // undefined
 ```
 
-#### `ignoreRejection(promise)`
+### `ignoreRejection(promise)`
 
 Passes the resolved value through, or resolves `undefined` on
 rejection.
 
 ```js
-await Common.ignoreRejection(fetch('/api/v1/health'));
+await ignoreRejection(fetch('/api/v1/health'));
 ```
+
+### `Promise.sleep(ms)`
+
+The namespaced path to [`sleep`](#sleepms).
+
+## `Constant`
+
+### `alwaysUndefined()`
+
+Alias of [`noop`](#noop), the same function object.
+
+```js
+alwaysUndefined(); // undefined
+```
+
+### `toTrue()` / `alwaysTrue()`
+
+Returns `true`.
+
+```js
+toTrue(); // true
+```
+
+### `toFalse()` / `alwaysFalse()`
+
+Returns `false`.
+
+```js
+toFalse(); // false
+```
+
+### `toNull()` / `alwaysNull()`
+
+Returns `null`.
+
+```js
+toNull(); // null
+```
+
+### `Always(value)`
+
+Builds a function that always yields `value`. Every call returns the
+same reference.
+
+```js
+const answer = Always(42);
+
+answer(); // 42
+```
+
+## `Is`
+
+Four predicate sets, plus the `Compound` members repeated on `Is`
+itself. A predicate takes one value and returns a `boolean`; it never
+throws.
+
+| Set         | Asks                                          |
+| ----------- | --------------------------------------------- |
+| `Primitive` | `typeof` on the primitive categories          |
+| `Type`      | `Primitive`, plus `Function`                  |
+| `Instance`  | `instanceof` against the builtin constructors |
+| `Compound`  | several conditions at once                    |
+
+### `Is.Primitive`
+
+`Bigint`, `Boolean`, `Number`, `Object`, `String`, `Symbol`,
+`Undefined` — each reads `typeof`.
+
+Two consequences of reading `typeof` directly:
+
+- `Is.Primitive.Object(null)` is `true`. This is not "is a plain
+  object"; use [`Is.PlainObject`](#iscompound) for that.
+- `Is.Primitive.Object(fn)` is `false`, because a function reads as
+  `'function'`.
+
+`Is.Primitive.Number(NaN)` is `true` — `typeof NaN` is `'number'`.
+
+### `Is.Type`
+
+The same seven readings, plus `Function`. It is `Primitive` widened by
+one, not a different question.
+
+### `Is.Instance`
+
+One predicate per builtin constructor: `Array`, `Map`, `Set`, `Date`,
+`RegExp`, `Error` and its subclasses, `ArrayBuffer` / `SharedArrayBuffer`
+/ `DataView`, every typed array, `Promise`, `WeakMap` / `WeakSet` /
+`WeakRef` / `FinalizationRegistry`, and the intrinsics
+`GeneratorFunction`, `AsyncFunction`, `AsyncGeneratorFunction`,
+`TypedArray`.
+
+These are `instanceof` checks, which carries a trap: the boxed-primitive
+constructors match only objects.
+
+```js
+Is.Instance.Number(1); // false
+Is.Instance.Number(Object(1)); // true
+```
+
+The same holds for `BigInt`, `Boolean`, `String`, and `Symbol`. Use
+`Is.Primitive` for the primitives themselves.
+
+### `Is.Instance.Of(constructor)`
+
+Builds a predicate from any constructor, so a check is available
+without adding an entry here.
+
+```js
+const isUrl = Is.Instance.Of(URL);
+
+isUrl(new URL('https://example.com')); // true
+```
+
+### `Is.Compound`
+
+| Name                 | Passes when                                     |
+| -------------------- | ----------------------------------------------- |
+| `AsyncIterable`      | has a callable `Symbol.asyncIterator`           |
+| `BuiltinIterator`    | inherits from `%IteratorPrototype%`             |
+| `ErrorLike`          | has a string `message`                          |
+| `Iterable`           | has a callable `Symbol.iterator`                |
+| `Iterator`           | has a callable `next`                           |
+| `NegativeInteger`    | integer below zero                              |
+| `NegativeNumber`     | number below zero                               |
+| `NonNegativeInteger` | integer of zero or above                        |
+| `NonNegativeNumber`  | number of zero or above                         |
+| `NonPositiveInteger` | integer of zero or below                        |
+| `NonPositiveNumber`  | number of zero or below                         |
+| `PlainObject`        | prototype is `Object.prototype` or `null`       |
+| `PositiveInteger`    | integer above zero                              |
+| `PositiveNumber`     | number above zero                               |
+| `Thenable`           | has a callable `then`                           |
+| `ValidDate`          | a `Date` whose `getTime()` is not `NaN`         |
+| `WellFormedIterator` | `next`, plus `Symbol.iterator` returning itself |
+
+The property probes read a slot, so `null` and `undefined` report
+`false` rather than throwing.
+
+On the numeric four: `NaN` fails them all, `Infinity` passes the
+number checks and fails the integer ones.
+
+The same seventeen names are exported on `Is` itself, so
+`Is.PositiveInteger` and `Is.Compound.PositiveInteger` are the same
+function.
+
+## `Intrinsic`
+
+The constructors that carry no global name, reached through the
+prototype chain instead.
+
+| Name                     | Is                         |
+| ------------------------ | -------------------------- |
+| `GeneratorFunction`      | `%GeneratorFunction%`      |
+| `AsyncFunction`          | `%AsyncFunction%`          |
+| `AsyncGeneratorFunction` | `%AsyncGeneratorFunction%` |
+| `TypedArray`             | `%TypedArray%`             |
+| `IteratorPrototype`      | `%IteratorPrototype%`      |
+
+```js
+Is.Instance.GeneratorFunction(function* () {}); // true
+Is.Instance.GeneratorFunction(function () {}); // false
+```
+
+`TypedArray` is the abstract base shared by every typed array, so
+`Is.Instance.TypedArray(new Float64Array())` is `true` while
+`Is.Instance.TypedArray(new ArrayBuffer(8))` is `false`.
 
 ### `SYMBOL`
 
@@ -196,7 +378,7 @@ unit is a whole multiple of the one below it.
 | `WEEK`        | `WK`  | 604800000    |
 
 ```js
-await Common.sleep(30 * Unit.Time.SEC);
+await sleep(30 * Unit.Time.SEC);
 ```
 
 Only fixed multiples are listed. A month and a year are not constants
@@ -262,10 +444,12 @@ name never states the same thing twice.
 
 Acronyms are the initials of the full name:
 
-| Full name                | Alias  | Input    | Output                 |
-| ------------------------ | ------ | -------- | ---------------------- |
-| `ReturnTrueThrowFalse`   | `RTTF` | function | `(...args) => boolean` |
-| `ResolveTrueRejectFalse` | `RTRF` | promise  | `Promise<boolean>`     |
+| Full name                | Alias  | Lives in          |
+| ------------------------ | ------ | ----------------- |
+| `ReturnTrueThrowFalse`   | `RTTF` | `Boolean.Adapter` |
+| `ResolveTrueRejectFalse` | `RTRF` | `Promise.Adapter` |
+
+`RTTF` reports a `boolean`; `RTRF` resolves one.
 
 The two differ by one letter, and that letter is the modality marker:
 `T` for throw, `R` for reject. Misreading one for the other fails
@@ -283,7 +467,12 @@ entry point and never the only way in.
   config, or serialized payloads. `JSON.stringify` drops symbol-keyed
   slots without warning.
 - Every helper is synchronous except `sleep` and the promise-taking
-  ones.
+  ones. Argument checks throw before any promise is attached, so they
+  are catchable at the call site.
+- Predicates never throw: `null`, `undefined`, and primitives all get a
+  `boolean` back.
+- `sideEffects` is `false`, and every top-level statement only builds
+  closures, constants, or symbols, so the package tree-shakes.
 
 ## Test
 
