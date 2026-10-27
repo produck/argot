@@ -1,4 +1,14 @@
-import './Common.test.mjs';
+import './Top.test.mjs';
+import './Constant.test.mjs';
 import './Symbol.test.mjs';
+import './Intrinsic.test.mjs';
+import './Common.test.mjs';
+import './Boolean/Adapter.test.mjs';
+import './Promise/index.test.mjs';
+import './Promise/Adapter.test.mjs';
+import './Is/Primitive.test.mjs';
+import './Is/Type.test.mjs';
+import './Is/Instance.test.mjs';
+import './Is/Compound.test.mjs';
 import './Unit/Byte.test.mjs';
 import './Unit/Time.test.mjs';

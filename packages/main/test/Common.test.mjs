@@ -1,262 +1,98 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 import * as Common from '../src/Common.mjs';
+import * as PromiseAdapter from '../src/Promise/Adapter.mjs';
+import * as PromiseModule from '../src/Promise/index.mjs';
+import * as SymbolTable from '../src/Symbol.mjs';
+import * as Top from '../src/Top.mjs';
 
-describe('noop()', () => {
-  it('should return undefined', () => {
-    assert.equal(Common.noop(), undefined);
+describe('>local re-exports', () => {
+  it('should expose the top helpers by identity', () => {
+    assert.equal(Common.noop, Top.noop);
+    assert.equal(Common.passthrough, Top.passthrough);
+    assert.equal(Common.instanceOf, Top.instanceOf);
+  });
+
+  it('should expose the symbol table by identity', () => {
+    assert.equal(Common.CONSTRUCTOR, SymbolTable.CONSTRUCTOR);
+  });
+
+  it('should expose the promise helpers by identity', () => {
+    assert.equal(Common.sleep, PromiseModule.sleep);
+    assert.equal(Common.RTRF, PromiseAdapter.RTRF);
+    assert.equal(Common.ignoreRejection, PromiseAdapter.ignoreRejection);
   });
 });
 
-describe('toUndefined()', () => {
-  it('should be identical to noop', () => {
-    assert.equal(Common.toUndefined, Common.noop);
+describe('>type-error re-export', () => {
+  it('should expose the assertion helpers', () => {
+    assert.equal(typeof Common.AssertionChecker, 'function');
+    assert.equal(typeof Common.ErrorMessage, 'function');
+    assert.equal(typeof Common.ThrowTypeError, 'function');
   });
 
-  it('should return undefined', () => {
-    assert.equal(Common.toUndefined(), undefined);
-  });
-});
+  it('should build a working assertion checker', () => {
+    const assertNumber = Common.AssertionChecker(
+      (value) => typeof value === 'number',
+      'number',
+    );
 
-describe('toTrue()', () => {
-  it('should return true', () => {
-    assert.equal(Common.toTrue(), true);
-  });
-});
-
-describe('toFalse()', () => {
-  it('should return false', () => {
-    assert.equal(Common.toFalse(), false);
-  });
-});
-
-describe('toNull()', () => {
-  it('should return null', () => {
-    assert.equal(Common.toNull(), null);
-  });
-});
-
-describe('passthrough()', () => {
-  it('should return the given value', () => {
-    const value = {};
-
-    assert.equal(Common.passthrough(value), value);
-  });
-});
-
-describe('sleep()', () => {
-  it('should resolve with undefined', async () => {
-    assert.equal(await Common.sleep(10), undefined);
+    assert.equal(assertNumber(1, 'args[0]'), undefined);
+    assert.throws(() => assertNumber('x', 'args[0]'), TypeError);
   });
 
-  it('should resolve asynchronously', async () => {
-    let settled = false;
-    const pending = Common.sleep(0).then(() => {
-      settled = true;
-    });
-
-    assert.equal(settled, false);
-
-    await pending;
-
-    assert.equal(settled, true);
+  it('should format a validation message', () => {
+    assert.equal(
+      Common.ErrorMessage('args[0]', 'number'),
+      'Invalid "args[0]", one "number" expected.',
+    );
   });
 
-  it('should throw when ms is not a number', () => {
-    assert.throws(() => Common.sleep('10'), {
+  it('should throw a TypeError', () => {
+    assert.throws(() => Common.ThrowTypeError('args[0]', 'number'), {
       name: 'TypeError',
-      message: 'Invalid "args[0] as ms", one "non-negative integer" expected.',
-    });
-  });
-
-  it('should throw when ms is negative', () => {
-    assert.throws(() => Common.sleep(-1), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as ms", one "non-negative integer" expected.',
-    });
-  });
-
-  it('should throw when ms is not an integer', () => {
-    assert.throws(() => Common.sleep(1.5), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as ms", one "non-negative integer" expected.',
+      message: 'Invalid "args[0]", one "number" expected.',
     });
   });
 });
 
-describe('ThrowFalse()', () => {
-  it('should return the result of the given function', () => {
-    assert.equal(Common.ThrowFalse(Common.toTrue)(), true);
-  });
-
-  it('should forward all arguments to the given function', () => {
-    const args = [];
-    const safe = Common.ThrowFalse((...values) => args.push(...values));
-
-    safe(1, 'two', 3);
-
-    assert.deepEqual(args, [1, 'two', 3]);
-  });
-
-  it('should return false when the given function throws', () => {
-    const safe = Common.ThrowFalse(() => {
-      throw new Error('boom');
-    });
-
-    assert.equal(safe(), false);
-  });
-
-  it('should throw when fn is not a function', () => {
-    assert.throws(() => Common.ThrowFalse(1), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as fn", one "function" expected.',
-    });
+describe('>ow re-export', () => {
+  it('should expose the ow namespace', () => {
+    assert.equal(typeof Common.Ow, 'object');
+    assert.equal(typeof Common.Ow.Thrower, 'function');
   });
 });
 
-describe('ReturnTrueThrowFalse()', () => {
-  it('should be the same function as RTTF', () => {
-    assert.equal(Common.RTTF, Common.ReturnTrueThrowFalse);
+describe('>behavior', () => {
+  it('should sleep through the re-exported helper', async () => {
+    assert.equal(await Common.sleep(0), undefined);
   });
 
-  it('should return true when the given function returns', () => {
-    assert.equal(Common.RTTF(Common.toTrue)(), true);
+  it('should collapse a rejection through the re-exported helper', async () => {
+    const rejected = Promise.reject(new Error('boom'));
+
+    assert.equal(await Common.ignoreRejection(rejected), undefined);
   });
 
-  it('should return true even when the given function returns false', () => {
-    assert.equal(Common.RTTF(Common.toFalse)(), true);
-  });
-
-  it('should forward all arguments to the given function', () => {
-    const args = [];
-    const report = Common.RTTF((...values) => args.push(...values));
-
-    report(1, 'two', 3);
-
-    assert.deepEqual(args, [1, 'two', 3]);
-  });
-
-  it('should return false when the given function throws', () => {
-    const report = Common.RTTF(() => {
-      throw new Error('boom');
-    });
-
-    assert.equal(report(), false);
-  });
-
-  it('should throw when fn is not a function', () => {
-    assert.throws(() => Common.RTTF(1), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as fn", one "function" expected.',
-    });
-  });
-});
-
-describe('ResolveTrueRejectFalse()', () => {
-  it('should be the same function as RTRF', () => {
-    assert.equal(Common.RTRF, Common.ResolveTrueRejectFalse);
-  });
-
-  it('should resolve with true', async () => {
+  it('should report a resolution through the re-exported helper', async () => {
     assert.equal(await Common.RTRF(Promise.resolve(1)), true);
   });
-
-  it('should resolve with true even when it resolves false', async () => {
-    assert.equal(await Common.RTRF(Promise.resolve(false)), true);
-  });
-
-  it('should resolve with false when the given promise rejects', async () => {
-    const rejection = Promise.reject(new Error('boom'));
-
-    assert.equal(await Common.RTRF(rejection), false);
-  });
-
-  it('should throw when promise is not a Promise', () => {
-    assert.throws(() => Common.RTRF(1), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as promise", one "Promise" expected.',
-    });
-  });
 });
 
-describe('resolveTrue()', () => {
-  it('should resolve with true', async () => {
-    assert.equal(await Common.resolveTrue(Promise.resolve(1)), true);
-  });
-
-  it('should reject when the given promise rejects', async () => {
-    const rejection = Promise.reject(new Error('boom'));
-
-    await assert.rejects(Common.resolveTrue(rejection), {
-      name: 'Error',
-      message: 'boom',
-    });
-  });
-
-  it('should throw when promise is not a Promise', () => {
-    assert.throws(() => Common.resolveTrue({}), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as promise", one "Promise" expected.',
-    });
-  });
-});
-
-describe('rejectFalse()', () => {
-  it('should resolve with the given value', async () => {
-    assert.equal(await Common.rejectFalse(Promise.resolve(1)), 1);
-  });
-
-  it('should resolve with false when the given promise rejects', async () => {
-    const rejection = Promise.reject(new Error('boom'));
-
-    assert.equal(await Common.rejectFalse(rejection), false);
-  });
-
-  it('should throw when promise is not a Promise', () => {
-    assert.throws(() => Common.rejectFalse({}), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as promise", one "Promise" expected.',
-    });
-  });
-});
-
-describe('ignoreResolution()', () => {
-  it('should resolve with undefined', async () => {
-    assert.equal(await Common.ignoreResolution(Promise.resolve(1)), undefined);
-  });
-
-  it('should reject when the given promise rejects', async () => {
-    const rejection = Promise.reject(new Error('boom'));
-
-    await assert.rejects(Common.ignoreResolution(rejection), {
-      name: 'Error',
-      message: 'boom',
-    });
-  });
-
-  it('should throw when promise is not a Promise', () => {
-    assert.throws(() => Common.ignoreResolution({}), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as promise", one "Promise" expected.',
-    });
-  });
-});
-
-describe('ignoreRejection()', () => {
-  it('should resolve with the given value', async () => {
-    assert.equal(await Common.ignoreRejection(Promise.resolve(1)), 1);
-  });
-
-  it('should resolve with undefined when rejected', async () => {
-    const rejection = Promise.reject(new Error('boom'));
-
-    assert.equal(await Common.ignoreRejection(rejection), undefined);
-  });
-
-  it('should throw when promise is not a Promise', () => {
-    assert.throws(() => Common.ignoreRejection(null), {
-      name: 'TypeError',
-      message: 'Invalid "args[0] as promise", one "Promise" expected.',
-    });
+describe('>surface', () => {
+  it('should expose exactly the re-exported names', () => {
+    assert.deepEqual(Object.keys(Common).sort(), [
+      'AssertionChecker',
+      'CONSTRUCTOR',
+      'ErrorMessage',
+      'Ow',
+      'RTRF',
+      'ThrowTypeError',
+      'ignoreRejection',
+      'instanceOf',
+      'noop',
+      'passthrough',
+      'sleep',
+    ]);
   });
 });
