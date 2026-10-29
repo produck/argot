@@ -2,11 +2,11 @@
   "bugs": {
     "url": "https://github.com/produck/argot/issues"
   },
-  "dependencies": {
-    "@produck/ow": "^0.2.6",
-    "@produck/type-error": "0.1.8"
-  },
   "description": "Shared vocabulary for produck projects: common helpers and a symbol table.",
+  "devDependencies": {
+    "@produck/ow": "^0.2.0",
+    "@produck/type-error": "^0.2.0"
+  },
   "exports": {
     ".": {
       "import": "./src/index.mjs",
@@ -20,6 +20,10 @@
   "license": "MIT",
   "main": "./src/index.mjs",
   "name": "@produck/argot",
+  "peerDependencies": {
+    "@produck/ow": "^0.2.0",
+    "@produck/type-error": "^0.2.0"
+  },
   "publishConfig": {
     "access": "public"
   },
